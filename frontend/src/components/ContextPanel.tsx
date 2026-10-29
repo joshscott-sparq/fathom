@@ -145,10 +145,13 @@ export function ContextPanel({ estimateId, initial, references, complexityFactor
     setPanel((p) => ({ ...p, [key]: (p[key] as ContextEntry[]).map((x) => x.id === id ? { ...x, content } : x) }));
   }
 
-  const dockHeight = collapsed ? "auto" : "42vh";
+  // Cap at 42vh (long tabs scroll within it) rather than forcing that height
+  // even when the active tab's content — e.g. an empty "Nothing here yet" —
+  // is far shorter, which left a large dead area at the bottom of the screen.
+  const dockMaxHeight = collapsed ? "auto" : "42vh";
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 z-30 bg-surface border-t border-line shadow-[0_-8px_24px_rgba(0,0,0,0.08)]" style={{ height: dockHeight }}>
+    <div className="fixed left-0 right-0 bottom-0 z-30 bg-surface border-t border-line shadow-[0_-8px_24px_rgba(0,0,0,0.08)]" style={{ maxHeight: dockMaxHeight }}>
       <div className="max-w-[1440px] mx-auto">
         {/* Tab bar (horizontally scrollable) + collapse handle */}
         <div className="flex items-stretch border-b border-line px-5 sm:px-7">
@@ -174,7 +177,7 @@ export function ContextPanel({ estimateId, initial, references, complexityFactor
         </div>
 
         {!collapsed && (
-          <div className="overflow-y-auto px-5 sm:px-7 py-3" style={{ height: "calc(42vh - 44px)" }}>
+          <div className="overflow-y-auto px-5 sm:px-7 py-3" style={{ maxHeight: "calc(42vh - 44px)" }}>
             {LIST_TABS.includes(tab) && (
               <EntryTab
                 tabKey={tab as Exclude<TabKey, "phases" | "external" | "reference">}
