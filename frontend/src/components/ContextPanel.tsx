@@ -70,7 +70,7 @@ const SEVERITIES = ["None", "Low", "Moderate", "High", "Extreme"] as const;
 type TabKey = (typeof ENTRY_TABS)[number]["key"];
 const LIST_TABS: TabKey[] = ["requirements", "risks", "accelerators", "assumptions"];
 
-const SOURCE_TYPES = ["sparqos", "speckit", "github", "salesforce", "notion", "slack", "other"] as const;
+const SOURCE_TYPES = ["sparqos", "speckit", "github", "salesforce", "notion", "slack", "google_sheets", "other"] as const;
 
 function withSparqOS(panel: Panel): Panel {
   if (panel.external_sources.some((s) => s.type === "sparqos")) return panel;
@@ -543,13 +543,20 @@ function ReferenceTab({ references }: { references: Reference[] }) {
 function ExternalTab({ panel, setPanel, canEdit }: any) {
   const [type, setType] = useState<string>("salesforce");
   const [nameV, setNameV] = useState("");
+  const [urlV, setUrlV] = useState("");
   function add() {
+    const url = urlV.trim();
     const src: ExternalSource = {
       id: uid(), type: type as any, display_name: nameV.trim() || type,
-      status: "needs_authentication", access_mode: type === "speckit" ? "read-write" : "read-only", config: {},
+      // A bare link needs no auth step — mark it connected as soon as it's added.
+      // Everything else (live-pull sources with no URL given) stays needs_authentication.
+      status: url ? "connected" : "needs_authentication",
+      access_mode: type === "speckit" ? "read-write" : "read-only",
+      config: url ? { url } : {},
     };
     setPanel((p: Panel) => ({ ...p, external_sources: [...p.external_sources, src] }));
     setNameV("");
+    setUrlV("");
   }
   function remove(id: string) { setPanel((p: Panel) => ({ ...p, external_sources: p.external_sources.filter((s) => s.id !== id) })); }
 
@@ -561,7 +568,9 @@ function ExternalTab({ panel, setPanel, canEdit }: any) {
       {panel.external_sources.map((s: any) => (
         <div key={s.id} className="flex items-center gap-2 py-2 border-b border-line last:border-0 text-[13px]">
           <span className="badge bg-brand-mint text-brand-sage uppercase">{s.type}</span>
-          <span className="flex-1">{s.display_name}</span>
+          {s.config?.url
+            ? <a className="flex-1 text-brand-orange hover:underline truncate" href={s.config.url} target="_blank" rel="noreferrer">{s.display_name} ↗</a>
+            : <span className="flex-1">{s.display_name}</span>}
           <span className="badge bg-line text-muted">{s.access_mode}</span>
           <span className={"badge " + statusColor(s.status)}>{s.status.replace("_", " ")}</span>
           {canEdit && s.type !== "sparqos" && <button className="text-muted hover:text-brand-orange-deep text-[12px]" onClick={() => remove(s.id)}>remove</button>}
@@ -570,9 +579,10 @@ function ExternalTab({ panel, setPanel, canEdit }: any) {
       {canEdit && (
         <div className="flex flex-wrap gap-1.5 mt-3">
           <select className="field !w-auto" value={type} onChange={(e) => setType(e.target.value)}>
-            {SOURCE_TYPES.filter((t) => t !== "sparqos").map((t) => <option key={t} value={t}>{t}</option>)}
+            {SOURCE_TYPES.filter((t) => t !== "sparqos").map((t) => <option key={t} value={t}>{t === "google_sheets" ? "Google Sheets" : t}</option>)}
           </select>
-          <input className="field !w-56" placeholder="Display name" value={nameV} onChange={(e) => setNameV(e.target.value)} />
+          <input className="field !w-56" placeholder="Display name (e.g. Profit Model)" value={nameV} onChange={(e) => setNameV(e.target.value)} />
+          <input className="field !w-64" placeholder="Link (URL, optional)" value={urlV} onChange={(e) => setUrlV(e.target.value)} />
           <button className="btn text-[12px]" onClick={add}>Connect source</button>
         </div>
       )}

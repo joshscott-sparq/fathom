@@ -130,7 +130,7 @@ export interface ContextPhase {
 
 export interface ExternalSource {
   id: string;
-  type: "sparqos" | "speckit" | "github" | "salesforce" | "notion" | "slack" | "other";
+  type: "sparqos" | "speckit" | "github" | "salesforce" | "notion" | "slack" | "google_sheets" | "other";
   display_name: string;
   status: "connected" | "needs_authentication" | "error";
   access_mode: "read-only" | "read-write";

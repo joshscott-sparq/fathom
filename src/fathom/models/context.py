@@ -87,6 +87,7 @@ class ExternalSourceType(str, Enum):
     SALESFORCE = "salesforce"
     NOTION = "notion"
     SLACK = "slack"
+    GOOGLE_SHEETS = "google_sheets"
     OTHER = "other"
 
 
